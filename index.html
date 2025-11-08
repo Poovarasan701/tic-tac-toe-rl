@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tic Tac Toe AI</title>
+  <style>
+    body { text-align: center; font-family: Arial; background: #222; color: #fff; }
+    .board { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; justify-content: center; margin-top: 50px; }
+    .cell { width: 100px; height: 100px; font-size: 48px; background: #444; border: 2px solid #888; cursor: pointer; }
+    .cell:hover { background: #666; }
+    #status { margin-top: 20px; font-size: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe vs AI 🤖</h1>
+  <div class="board" id="board"></div>
+  <p id="status"></p>
+
+  <script>
+    const boardElem = document.getElementById('board');
+    const statusElem = document.getElementById('status');
+    let board = Array(9).fill(' ');
+    let gameOver = false;
+
+    function renderBoard() {
+      boardElem.innerHTML = '';
+      board.forEach((cell, i) => {
+        const div = document.createElement('div');
+        div.className = 'cell';
+        div.textContent = cell;
+        div.onclick = () => handleMove(i);
+        boardElem.appendChild(div);
+      });
+    }
+
+    async function handleMove(i) {
+      if (gameOver || board[i] !== ' ') return;
+      board[i] = 'X';
+      renderBoard();
+      if (checkWinner()) return;
+      const res = await fetch('/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ board })
+      });
+      const data = await res.json();
+      board[data.move] = 'O';
+      renderBoard();
+      checkWinner();
+    }
+
+    function checkWinner() {
+      const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for (const [a,b,c] of wins) {
+        if (board[a] !== ' ' && board[a] === board[b] && board[a] === board[c]) {
+          statusElem.textContent = board[a] + ' wins!';
+          gameOver = true;
+          return true;
+        }
+      }
+      if (!board.includes(' ')) {
+        statusElem.textContent = 'Draw!';
+        gameOver = true;
+        return true;
+      }
+      return false;
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>
